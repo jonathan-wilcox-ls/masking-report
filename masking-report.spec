@@ -1,12 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec file for masking-report executable."""
 
+import os
+import sys
+
+# Add src to path for proper imports
+src_path = os.path.join(os.path.dirname(os.path.abspath(SPEC)), 'src')
+
 a = Analysis(
-    ['src/masking_report/cli.py'],
-    pathex=[],
+    ['src/masking_report/__main__.py'],
+    pathex=[src_path],
     binaries=[],
     datas=[],
     hiddenimports=[
+        'masking_report',
+        'masking_report.cli',
+        'masking_report.client',
+        'masking_report.models',
+        'masking_report.report',
         'click',
         'httpx',
         'httpx._transports',
