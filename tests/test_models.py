@@ -192,3 +192,49 @@ class TestExecutionComponentEdgeCases:
         }
         component = ExecutionComponent.from_api(data)
         assert component.component_name == "SCHEMA.TABLE_NAME$1"
+
+
+class TestExecutionEventOptionalFields:
+    """Tests for optional fields in ExecutionEvent."""
+
+    def test_event_without_component_id(self):
+        """Test event without executionComponentId (e.g., JOB_ABORTED)."""
+        data = {
+            "executionEventId": 45,
+            "executionId": 289,
+            "eventType": "JOB_ABORTED",
+            "severity": "CRITICAL",
+            "cause": "UNHANDLED_EXCEPTION",
+            "count": 1,
+            "timeStamp": "2026-02-03T19:25:40.167+00:00",
+            "exceptionType": "org.apache.hop.core.exception.HopDatabase",
+            "exceptionDetail": "Error details...",
+        }
+        event = ExecutionEvent.from_api(data)
+
+        assert event.execution_event_id == 45
+        assert event.event_type == "JOB_ABORTED"
+        assert event.severity == "CRITICAL"
+        assert event.execution_component_id is None
+        assert event.masked_object_name is None
+        assert event.algorithm_name is None
+
+    def test_event_with_all_optional_fields(self):
+        """Test event with all optional fields present."""
+        data = {
+            "executionEventId": 42,
+            "executionId": 289,
+            "eventType": "UNMASKED_DATA",
+            "severity": "WARNING",
+            "cause": "PATTERN_MATCH_FAILURE",
+            "count": 20000,
+            "timeStamp": "2026-02-03T19:25:37.252+00:00",
+            "executionComponentId": 576,
+            "maskedObjectName": "AGE",
+            "algorithmName": "RepeatFirstDigit",
+        }
+        event = ExecutionEvent.from_api(data)
+
+        assert event.execution_component_id == 576
+        assert event.masked_object_name == "AGE"
+        assert event.algorithm_name == "RepeatFirstDigit"

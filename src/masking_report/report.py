@@ -37,13 +37,17 @@ class ReportBuilder:
             c.execution_component_id: c for c in components
         }
 
-    def _get_component_name(self, component_id: int) -> str:
-        """Get component name by ID, or 'Unknown' if not found."""
+    def _get_component_name(self, component_id: Optional[int]) -> str:
+        """Get component name by ID, or 'N/A' if not found or None."""
+        if component_id is None:
+            return "N/A"
         component = self._component_map.get(component_id)
         return component.component_name if component else "Unknown"
 
-    def _get_component_status(self, component_id: int) -> str:
-        """Get component status by ID, or 'Unknown' if not found."""
+    def _get_component_status(self, component_id: Optional[int]) -> str:
+        """Get component status by ID, or 'N/A' if not found or None."""
+        if component_id is None:
+            return "N/A"
         component = self._component_map.get(component_id)
         return component.status if component else "Unknown"
 
@@ -93,8 +97,8 @@ class ReportBuilder:
         for event in filtered_events:
             row = ReportRow(
                 component_name=self._get_component_name(event.execution_component_id),
-                masked_object_name=event.masked_object_name,
-                algorithm_name=event.algorithm_name,
+                masked_object_name=event.masked_object_name or "N/A",
+                algorithm_name=event.algorithm_name or "N/A",
                 event_type=event.event_type,
                 severity=event.severity,
                 cause=event.cause,

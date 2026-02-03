@@ -180,6 +180,33 @@ class TestReportBuilderEdgeCases:
         assert len(rows) == 1
         assert rows[0].component_name == "Unknown"
 
+    def test_event_without_component_id(self):
+        """Test event without component ID (e.g., JOB_ABORTED) shows 'N/A'."""
+        components = [make_component(1, "CUSTOMERS")]
+        # Create an event without component_id
+        event = ExecutionEvent(
+            execution_event_id=99,
+            execution_id=1,
+            event_type="JOB_ABORTED",
+            severity="CRITICAL",
+            cause="UNHANDLED_EXCEPTION",
+            count=1,
+            timestamp=None,
+            execution_component_id=None,
+            masked_object_name=None,
+            algorithm_name=None,
+        )
+
+        builder = ReportBuilder(components, [event])
+        rows = builder.build_detailed_report()
+
+        assert len(rows) == 1
+        assert rows[0].component_name == "N/A"
+        assert rows[0].masked_object_name == "N/A"
+        assert rows[0].algorithm_name == "N/A"
+        assert rows[0].event_type == "JOB_ABORTED"
+        assert rows[0].severity == "CRITICAL"
+
     def test_empty_events_list(self):
         """Test report with no events."""
         components = [make_component(1, "CUSTOMERS")]

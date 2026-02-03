@@ -36,9 +36,9 @@ class ExecutionEvent:
     cause: str
     count: int
     timestamp: Optional[datetime]
-    execution_component_id: int
-    masked_object_name: str
-    algorithm_name: str
+    execution_component_id: Optional[int]
+    masked_object_name: Optional[str]
+    algorithm_name: Optional[str]
 
     @classmethod
     def from_api(cls, data: dict) -> "ExecutionEvent":
@@ -46,9 +46,10 @@ class ExecutionEvent:
         timestamp = None
         if data.get("timeStamp"):
             try:
-                timestamp = datetime.fromisoformat(
-                    data["timeStamp"].replace("+0000", "+00:00")
-                )
+                # Handle both +0000 and +00:00 timezone formats
+                ts = data["timeStamp"]
+                ts = ts.replace("+0000", "+00:00").replace("+00:00:00", "+00:00")
+                timestamp = datetime.fromisoformat(ts)
             except ValueError:
                 pass
 
@@ -60,9 +61,9 @@ class ExecutionEvent:
             cause=data["cause"],
             count=data["count"],
             timestamp=timestamp,
-            execution_component_id=data["executionComponentId"],
-            masked_object_name=data["maskedObjectName"],
-            algorithm_name=data["algorithmName"],
+            execution_component_id=data.get("executionComponentId"),
+            masked_object_name=data.get("maskedObjectName"),
+            algorithm_name=data.get("algorithmName"),
         )
 
 
