@@ -25,8 +25,8 @@ def client():
 class TestAuthentication:
     """Tests for login functionality."""
 
-    def test_login_success(self, client: MaskingClient, httpx_mock: HTTPXMock):
-        """Test successful login stores auth token."""
+    def test_login_success_201(self, client: MaskingClient, httpx_mock: HTTPXMock):
+        """Test successful login with status 201 stores auth token."""
         httpx_mock.add_response(
             method="POST",
             url="https://engine.example.com/masking/api/v5.1.47/login",
@@ -37,6 +37,19 @@ class TestAuthentication:
         client.login()
 
         assert client._auth_token == "test-token-12345"
+
+    def test_login_success_200(self, client: MaskingClient, httpx_mock: HTTPXMock):
+        """Test successful login with status 200 stores auth token."""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://engine.example.com/masking/api/v5.1.47/login",
+            json={"Authorization": "test-token-200"},
+            status_code=200,
+        )
+
+        client.login()
+
+        assert client._auth_token == "test-token-200"
 
     def test_login_invalid_credentials(self, client: MaskingClient, httpx_mock: HTTPXMock):
         """Test login with invalid credentials raises AuthenticationError."""

@@ -85,7 +85,7 @@ class MaskingClient:
         if response.status_code == 401:
             raise AuthenticationError("Invalid username or password")
 
-        if response.status_code != 201:
+        if response.status_code not in (200, 201):
             raise APIError(
                 f"Login failed with status {response.status_code}: {response.text}"
             )
