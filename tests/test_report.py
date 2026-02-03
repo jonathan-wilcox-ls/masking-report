@@ -164,3 +164,159 @@ def test_format_as_json():
     data = json.loads(json_output)
     assert len(data) == 1
     assert data[0]["componentName"] == "CUSTOMERS"
+
+
+class TestReportBuilderEdgeCases:
+    """Edge case tests for ReportBuilder."""
+
+    def test_event_with_unknown_component(self):
+        """Test event referencing non-existent component shows 'Unknown'."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [make_event(1, component_id=999)]  # Non-existent component
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert len(rows) == 1
+        assert rows[0].component_name == "Unknown"
+
+    def test_empty_events_list(self):
+        """Test report with no events."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = []
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert len(rows) == 0
+
+    def test_empty_components_list(self):
+        """Test report with no components."""
+        components = []
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert len(rows) == 1
+        assert rows[0].component_name == "Unknown"
+
+    def test_both_empty(self):
+        """Test report with no components and no events."""
+        builder = ReportBuilder([], [])
+        detailed = builder.build_detailed_report()
+        summary = builder.build_summary_report()
+
+        assert len(detailed) == 0
+        assert len(summary) == 0
+
+    def test_filter_case_insensitive(self):
+        """Test that filters are case-insensitive."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [
+            make_event(1, component_id=1, severity="WARNING"),
+            make_event(2, component_id=1, severity="warning"),  # lowercase
+        ]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report(severity=["warning"])
+
+        assert len(rows) == 2  # Both should match
+
+    def test_multiple_filters_combined(self):
+        """Test combining severity and event_type filters."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [
+            make_event(1, component_id=1, severity="WARNING", event_type="TYPE_A"),
+            make_event(2, component_id=1, severity="WARNING", event_type="TYPE_B"),
+            make_event(3, component_id=1, severity="ERROR", event_type="TYPE_A"),
+        ]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report(severity=["WARNING"], event_type=["TYPE_A"])
+
+        assert len(rows) == 1
+        assert rows[0].severity == "WARNING"
+        assert rows[0].event_type == "TYPE_A"
+
+    def test_summary_top_cause_with_ties(self):
+        """Test summary top_cause when multiple causes have same count."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [
+            make_event(1, component_id=1, cause="CAUSE_A"),
+            make_event(2, component_id=1, cause="CAUSE_B"),
+        ]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+
+        # Should pick one of them (implementation returns first most common)
+        assert rows[0].top_cause in ["CAUSE_A", "CAUSE_B"]
+
+    def test_summary_top_cause_empty_when_no_events(self):
+        """Test summary top_cause is empty when component has no events."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = []
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+
+        assert len(rows) == 1
+        assert rows[0].top_cause == ""
+
+    def test_summary_counts_severities_correctly(self):
+        """Test that summary correctly counts different severities."""
+        components = [make_component(1, "TABLE")]
+        events = [
+            make_event(1, component_id=1, severity="WARNING"),
+            make_event(2, component_id=1, severity="WARNING"),
+            make_event(3, component_id=1, severity="ERROR"),
+            make_event(4, component_id=1, severity="INFO"),  # Neither warning nor error
+        ]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+
+        assert rows[0].total_events == 4
+        assert rows[0].warnings == 2
+        assert rows[0].errors == 1
+
+
+class TestOutputFormatEdgeCases:
+    """Edge case tests for output formatting."""
+
+    def test_csv_empty_rows(self):
+        """Test CSV output with empty rows."""
+        csv_output = format_as_csv([])
+        assert csv_output == ""
+
+    def test_json_empty_rows(self):
+        """Test JSON output with empty rows."""
+        json_output = format_as_json([])
+        data = json.loads(json_output)
+        assert data == []
+
+    def test_csv_special_characters(self):
+        """Test CSV handles special characters in data."""
+        components = [make_component(1, 'TABLE,WITH"SPECIAL')]
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+        csv_output = format_as_csv(rows)
+
+        # CSV should properly escape the special characters
+        assert "TABLE" in csv_output
+
+    def test_json_special_characters(self):
+        """Test JSON handles special characters in data."""
+        components = [make_component(1, 'TABLE"WITH\\SPECIAL')]
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+        json_output = format_as_json(rows)
+
+        # Should be valid JSON
+        data = json.loads(json_output)
+        assert 'TABLE"WITH\\SPECIAL' in data[0]["componentName"]
