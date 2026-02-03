@@ -20,7 +20,7 @@ from .report import (
 )
 
 
-@click.command()
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option(
     "-e",
     "--engine",
