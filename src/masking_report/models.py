@@ -13,6 +13,8 @@ class ExecutionComponent:
     component_name: str
     execution_id: int
     status: str
+    rows_masked: Optional[int] = None
+    rows_total: Optional[int] = None
 
     @classmethod
     def from_api(cls, data: dict) -> "ExecutionComponent":
@@ -22,6 +24,8 @@ class ExecutionComponent:
             component_name=data["componentName"],
             execution_id=data["executionId"],
             status=data["status"],
+            rows_masked=data.get("rowsMasked"),
+            rows_total=data.get("rowsTotal"),
         )
 
 
@@ -78,10 +82,14 @@ class ReportRow:
     severity: str
     cause: str
     count: int
+    execution_event_id: int = 0
+    rows_masked: Optional[int] = None
+    rows_total: Optional[int] = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON/CSV output."""
         return {
+            "executionEventId": self.execution_event_id,
             "componentName": self.component_name,
             "maskedObjectName": self.masked_object_name,
             "algorithmName": self.algorithm_name,
@@ -89,6 +97,8 @@ class ReportRow:
             "severity": self.severity,
             "cause": self.cause,
             "count": self.count,
+            "rowsMasked": self.rows_masked,
+            "rowsTotal": self.rows_total,
         }
 
 
@@ -102,6 +112,8 @@ class SummaryRow:
     warnings: int
     errors: int
     top_cause: str
+    rows_masked: Optional[int] = None
+    rows_total: Optional[int] = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON/CSV output."""
@@ -112,4 +124,6 @@ class SummaryRow:
             "warnings": self.warnings,
             "errors": self.errors,
             "topCause": self.top_cause,
+            "rowsMasked": self.rows_masked,
+            "rowsTotal": self.rows_total,
         }

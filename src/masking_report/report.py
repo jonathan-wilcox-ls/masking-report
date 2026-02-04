@@ -95,6 +95,7 @@ class ReportBuilder:
 
         rows = []
         for event in filtered_events:
+            component = self._component_map.get(event.execution_component_id)
             row = ReportRow(
                 component_name=self._get_component_name(event.execution_component_id),
                 masked_object_name=event.masked_object_name or "N/A",
@@ -103,6 +104,9 @@ class ReportBuilder:
                 severity=event.severity,
                 cause=event.cause,
                 count=event.count,
+                execution_event_id=event.execution_event_id,
+                rows_masked=component.rows_masked if component else None,
+                rows_total=component.rows_total if component else None,
             )
             rows.append(row)
 
@@ -148,6 +152,7 @@ class ReportBuilder:
             top_cause = Counter(causes).most_common(1)
             top_cause_str = top_cause[0][0] if top_cause else ""
 
+            component = self._component_map.get(component_id)
             row = SummaryRow(
                 component_name=self._get_component_name(component_id),
                 status=self._get_component_status(component_id),
@@ -155,6 +160,8 @@ class ReportBuilder:
                 warnings=warnings,
                 errors=errors,
                 top_cause=top_cause_str,
+                rows_masked=component.rows_masked if component else None,
+                rows_total=component.rows_total if component else None,
             )
             rows.append(row)
 
@@ -183,6 +190,8 @@ def format_as_table(rows: list[ReportRow] | list[SummaryRow], summary: bool = Fa
         table.add_column("Warnings", justify="right", style="yellow")
         table.add_column("Errors", justify="right", style="red")
         table.add_column("Top Cause")
+        table.add_column("Rows Masked", justify="right")
+        table.add_column("Rows Total", justify="right")
 
         for row in rows:
             status_style = "green" if row.status == "SUCCEEDED" else "red"
@@ -193,6 +202,8 @@ def format_as_table(rows: list[ReportRow] | list[SummaryRow], summary: bool = Fa
                 str(row.warnings),
                 str(row.errors),
                 row.top_cause,
+                str(row.rows_masked) if row.rows_masked is not None else "",
+                str(row.rows_total) if row.rows_total is not None else "",
             )
     else:
         table = Table(title="Execution Events Detail")
@@ -203,6 +214,9 @@ def format_as_table(rows: list[ReportRow] | list[SummaryRow], summary: bool = Fa
         table.add_column("Severity")
         table.add_column("Cause")
         table.add_column("Count", justify="right")
+        table.add_column("Event ID", justify="right")
+        table.add_column("Rows Masked", justify="right")
+        table.add_column("Rows Total", justify="right")
 
         for row in rows:
             severity_style = "yellow" if row.severity == "WARNING" else "red"
@@ -214,6 +228,9 @@ def format_as_table(rows: list[ReportRow] | list[SummaryRow], summary: bool = Fa
                 f"[{severity_style}]{row.severity}[/{severity_style}]",
                 row.cause,
                 str(row.count),
+                str(row.execution_event_id),
+                str(row.rows_masked) if row.rows_masked is not None else "",
+                str(row.rows_total) if row.rows_total is not None else "",
             )
 
     with console.capture() as capture:

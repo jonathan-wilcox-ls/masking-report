@@ -15,6 +15,8 @@ def test_execution_component_from_api():
         "componentName": "CUSTOMERS",
         "executionId": 10,
         "status": "SUCCEEDED",
+        "rowsMasked": 5000,
+        "rowsTotal": 10000,
     }
     component = ExecutionComponent.from_api(data)
 
@@ -22,6 +24,22 @@ def test_execution_component_from_api():
     assert component.component_name == "CUSTOMERS"
     assert component.execution_id == 10
     assert component.status == "SUCCEEDED"
+    assert component.rows_masked == 5000
+    assert component.rows_total == 10000
+
+
+def test_execution_component_from_api_without_row_fields():
+    """Test creating ExecutionComponent from API response without row fields."""
+    data = {
+        "executionComponentId": 20,
+        "componentName": "CUSTOMERS",
+        "executionId": 10,
+        "status": "SUCCEEDED",
+    }
+    component = ExecutionComponent.from_api(data)
+
+    assert component.rows_masked is None
+    assert component.rows_total is None
 
 
 def test_execution_event_from_api():
@@ -62,6 +80,9 @@ def test_report_row_to_dict():
         severity="WARNING",
         cause="PATTERN_MATCH_FAILURE",
         count=15,
+        execution_event_id=42,
+        rows_masked=5000,
+        rows_total=10000,
     )
     d = row.to_dict()
 
@@ -72,6 +93,9 @@ def test_report_row_to_dict():
     assert d["severity"] == "WARNING"
     assert d["cause"] == "PATTERN_MATCH_FAILURE"
     assert d["count"] == 15
+    assert d["executionEventId"] == 42
+    assert d["rowsMasked"] == 5000
+    assert d["rowsTotal"] == 10000
 
 
 def test_summary_row_to_dict():
@@ -83,6 +107,8 @@ def test_summary_row_to_dict():
         warnings=15,
         errors=3,
         top_cause="PATTERN_MATCH_FAILURE",
+        rows_masked=5000,
+        rows_total=10000,
     )
     d = row.to_dict()
 
@@ -92,6 +118,8 @@ def test_summary_row_to_dict():
     assert d["warnings"] == 15
     assert d["errors"] == 3
     assert d["topCause"] == "PATTERN_MATCH_FAILURE"
+    assert d["rowsMasked"] == 5000
+    assert d["rowsTotal"] == 10000
 
 
 class TestExecutionEventEdgeCases:

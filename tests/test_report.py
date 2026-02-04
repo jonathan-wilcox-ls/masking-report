@@ -10,13 +10,21 @@ from masking_report.report import (
 )
 
 
-def make_component(id: int, name: str, status: str = "SUCCEEDED") -> ExecutionComponent:
+def make_component(
+    id: int,
+    name: str,
+    status: str = "SUCCEEDED",
+    rows_masked: int | None = None,
+    rows_total: int | None = None,
+) -> ExecutionComponent:
     """Helper to create test components."""
     return ExecutionComponent(
         execution_component_id=id,
         component_name=name,
         execution_id=1,
         status=status,
+        rows_masked=rows_masked,
+        rows_total=rows_total,
     )
 
 
@@ -347,3 +355,100 @@ class TestOutputFormatEdgeCases:
         # Should be valid JSON
         data = json.loads(json_output)
         assert 'TABLE"WITH\\SPECIAL' in data[0]["componentName"]
+
+
+class TestNewFields:
+    """Tests for executionEventId, rowsMasked, rowsTotal fields."""
+
+    def test_detailed_report_includes_event_id(self):
+        """Test that detailed report includes execution event ID."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [make_event(10, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert rows[0].execution_event_id == 10
+
+    def test_detailed_report_includes_row_counts(self):
+        """Test that detailed report includes rows_masked and rows_total from component."""
+        components = [make_component(1, "CUSTOMERS", rows_masked=5000, rows_total=10000)]
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert rows[0].rows_masked == 5000
+        assert rows[0].rows_total == 10000
+
+    def test_detailed_report_null_row_counts_for_unknown_component(self):
+        """Test that row counts are None when component is unknown."""
+        components = [make_component(1, "CUSTOMERS", rows_masked=5000, rows_total=10000)]
+        events = [make_event(1, component_id=999)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+
+        assert rows[0].rows_masked is None
+        assert rows[0].rows_total is None
+
+    def test_summary_report_includes_row_counts(self):
+        """Test that summary report includes rows_masked and rows_total."""
+        components = [
+            make_component(1, "CUSTOMERS", rows_masked=5000, rows_total=10000),
+            make_component(2, "ORDERS", rows_masked=3000, rows_total=8000),
+        ]
+        events = [
+            make_event(1, component_id=1),
+            make_event(2, component_id=2),
+        ]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+
+        customers = next(r for r in rows if r.component_name == "CUSTOMERS")
+        orders = next(r for r in rows if r.component_name == "ORDERS")
+
+        assert customers.rows_masked == 5000
+        assert customers.rows_total == 10000
+        assert orders.rows_masked == 3000
+        assert orders.rows_total == 8000
+
+    def test_summary_report_null_row_counts_when_not_set(self):
+        """Test that summary row counts are None when component has no row data."""
+        components = [make_component(1, "CUSTOMERS")]
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+
+        assert rows[0].rows_masked is None
+        assert rows[0].rows_total is None
+
+    def test_detailed_json_includes_new_fields(self):
+        """Test that JSON output includes executionEventId, rowsMasked, rowsTotal."""
+        components = [make_component(1, "CUSTOMERS", rows_masked=5000, rows_total=10000)]
+        events = [make_event(42, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_detailed_report()
+        json_output = format_as_json(rows)
+
+        data = json.loads(json_output)
+        assert data[0]["executionEventId"] == 42
+        assert data[0]["rowsMasked"] == 5000
+        assert data[0]["rowsTotal"] == 10000
+
+    def test_summary_csv_includes_new_fields(self):
+        """Test that CSV output includes rowsMasked and rowsTotal columns."""
+        components = [make_component(1, "CUSTOMERS", rows_masked=5000, rows_total=10000)]
+        events = [make_event(1, component_id=1)]
+
+        builder = ReportBuilder(components, events)
+        rows = builder.build_summary_report()
+        csv_output = format_as_csv(rows)
+
+        assert "rowsMasked" in csv_output
+        assert "rowsTotal" in csv_output
+        assert "5000" in csv_output
+        assert "10000" in csv_output
