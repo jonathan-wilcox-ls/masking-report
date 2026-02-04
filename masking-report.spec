@@ -4,8 +4,13 @@
 import os
 import sys
 
+from PyInstaller.utils.hooks import collect_submodules
+
 # Add src to path for proper imports
 src_path = os.path.join(os.path.dirname(os.path.abspath(SPEC)), 'src')
+
+# Collect all rich._unicode_data submodules (dynamically loaded at runtime)
+rich_unicode_imports = collect_submodules('rich._unicode_data')
 
 a = Analysis(
     ['src/masking_report/__main__.py'],
@@ -25,7 +30,7 @@ a = Analysis(
         'rich',
         'rich.console',
         'rich.table',
-    ],
+    ] + rich_unicode_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
