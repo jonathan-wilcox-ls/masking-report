@@ -121,24 +121,24 @@ masking-report -e https://engine.example.com -x 123 -u admin --insecure
 ### Detailed Mode (Default)
 
 ```
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
-┃ Component   ┃ Masked Object  ┃ Algorithm   ┃ Event Type    ┃ Severity ┃ Cause                 ┃ Count ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
-│ CUSTOMERS   │ FIRST_NAME     │ NameAlgo    │ UNMASKED_DATA │ WARNING  │ PATTERN_MATCH_FAILURE │    15 │
-│ CUSTOMERS   │ SSN            │ SSNAlgo     │ UNMASKED_DATA │ WARNING  │ NULL_VALUE            │     3 │
-│ ORDERS      │ CREDIT_CARD    │ CCAlgo      │ UNMASKED_DATA │ ERROR    │ INVALID_FORMAT        │     1 │
-└─────────────┴────────────────┴─────────────┴───────────────┴──────────┴───────────────────────┴───────┘
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Component   ┃ Masked Object  ┃ Algorithm   ┃ Event Type    ┃ Severity ┃ Cause                 ┃ Count ┃ Event ID ┃ Rows Masked  ┃ Rows Total ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ CUSTOMERS   │ FIRST_NAME     │ NameAlgo    │ UNMASKED_DATA │ WARNING  │ PATTERN_MATCH_FAILURE │    15 │       42 │         5000 │      10000 │
+│ CUSTOMERS   │ SSN            │ SSNAlgo     │ UNMASKED_DATA │ WARNING  │ NULL_VALUE            │     3 │       43 │         5000 │      10000 │
+│ ORDERS      │ CREDIT_CARD    │ CCAlgo      │ UNMASKED_DATA │ ERROR    │ INVALID_FORMAT        │     1 │       44 │         3000 │       8000 │
+└─────────────┴────────────────┴─────────────┴───────────────┴──────────┴───────────────────────┴───────┴──────────┴──────────────┴────────────┘
 ```
 
 ### Summary Mode
 
 ```
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Component   ┃ Status    ┃ Total Events ┃ Warnings ┃ Errors ┃ Top Cause             ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ CUSTOMERS   │ SUCCEEDED │           18 │       18 │      0 │ PATTERN_MATCH_FAILURE │
-│ ORDERS      │ FAILED    │            5 │        2 │      3 │ INVALID_FORMAT        │
-└─────────────┴───────────┴──────────────┴──────────┴────────┴───────────────────────┘
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Component   ┃ Status    ┃ Total Events ┃ Warnings ┃ Errors ┃ Top Cause             ┃ Rows Masked  ┃ Rows Total ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ CUSTOMERS   │ SUCCEEDED │           18 │       18 │      0 │ PATTERN_MATCH_FAILURE │         5000 │      10000 │
+│ ORDERS      │ FAILED    │            5 │        2 │      3 │ INVALID_FORMAT        │         3000 │       8000 │
+└─────────────┴───────────┴──────────────┴──────────┴────────┴───────────────────────┴──────────────┴────────────┘
 ```
 
 ## Development
